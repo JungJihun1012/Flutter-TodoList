@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_todolist/provider/filtered_todos.dart';
+import 'package:flutter_todolist/provider/provider.dart';
+import 'package:flutter_todolist/provider/todo_filter.dart';
 import 'package:flutter_todolist/provider/todo_list.dart';
 import 'package:provider/provider.dart';
 
@@ -43,14 +46,14 @@ class TodoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text(
+      children: [
+        const Text(
           'TODO',
           style: TextStyle(fontSize: 40.0),
         ),
         Text(
-          '0 items left',
-          style: TextStyle(
+          '${context.watch<TodoActiveCount>().state.todoActiveCount} items left',
+          style: const TextStyle(
             fontSize: 20.0,
             color: Colors.redAccent,
           ),
@@ -92,16 +95,9 @@ class _CreateTodoState extends State<CreateTodo> {
   }
 }
 
-class SearchAndFilterTodo extends StatefulWidget {
-  //StatelessWidget
+// StatefulWidget => StatelessWidget 변경.
+class SearchAndFilterTodo extends StatelessWidget {
   const SearchAndFilterTodo({Key? key}) : super(key: key);
-
-  @override
-  State<SearchAndFilterTodo> createState() => _SearchAndFilterTodoState();
-}
-
-class _SearchAndFilterTodoState extends State<SearchAndFilterTodo> {
-  String clickedType = 'all';
 
   // final debounce = Debounce(milliseconds: 1000);
   @override
@@ -117,39 +113,37 @@ class _SearchAndFilterTodoState extends State<SearchAndFilterTodo> {
           ),
           onChanged: (String? newSearchTerm) {
             debugPrint('Search todos: $newSearchTerm');
-            // if (newSearchTerm != null) {
-            //   debounce.run(() {
-            //     context.read<TodoSearch>().setSearchTerm(newSearchTerm);
-            //   });
-            // }
+            if (newSearchTerm != null) {
+              //   debounce.run(() {
+              context.read<TodoSearch>().setSearchTerm(newSearchTerm);
+              //   });
+            }
           },
         ),
         const SizedBox(height: 10.0),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            filterButton(context, 'all'),
-            filterButton(context, 'active'),
-            filterButton(context, 'completed'),
+            filterButton(context, Filter.all),
+            filterButton(context, Filter.active),
+            filterButton(context, Filter.completed),
           ],
         ),
       ],
     );
   }
 
-  Widget filterButton(BuildContext context, String filter) {
-    //, Filter filter
+  Widget filterButton(BuildContext context, Filter filter) {
     return TextButton(
       onPressed: () {
-        // context.read<TodoFilter>().changeFilter(filter);
-        clickedType = filter;
-        debugPrint('Clicked button $clickedType');
-        setState(() {});
+        context.read<TodoFilter>().changeFilter(filter);
+        // clickedType = filter;
+        debugPrint('Clicked button ${context.read<TodoFilter>().state.filter}');
       },
       child: Text(
-        filter == 'all'
+        filter == Filter.all
             ? 'All'
-            : filter == 'active'
+            : filter == Filter.active
                 ? 'Active'
                 : 'Completed',
         style: TextStyle(
@@ -160,32 +154,11 @@ class _SearchAndFilterTodoState extends State<SearchAndFilterTodo> {
     );
   }
 
-  Color textColor(BuildContext context, String filter) {
-    //Filter filter
-    var currentFilter = clickedType; //context.watch<TodoFilter>().state.filter
+  Color textColor(BuildContext context, Filter filter) {
+    var currentFilter = context.watch<TodoFilter>().state.filter;
     return currentFilter == filter ? Colors.blue : Colors.grey;
   }
 }
-
-// => todo_model.dart
-// class Todo {
-//   String id;
-//   String desc;
-//   bool completed;
-//
-//   Todo({
-//     required this.id,
-//     required this.desc,
-//     this.completed = false,
-//   });
-//
-// }
-//
-// List<Todo> todos = [
-//   Todo(id: '1', desc: 'Clean the room'),
-//   Todo(id: '2', desc: 'Wash the dish'),
-//   Todo(id: '3', desc: 'Do homework'),
-// ];
 
 class ShowTodos extends StatelessWidget {
   const ShowTodos({Key? key}) : super(key: key);
@@ -206,8 +179,7 @@ class ShowTodos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 현재는 초기화 되는 부분에서 가져오지만 차후에는 필더리스트 가져오기.
-    final todos = context.watch<TodoList>().state.todos;
+    final todos = context.watch<FilteredTodos>().state.filteredTodos;
 
     return ListView.separated(
       primary: false,
@@ -217,7 +189,41 @@ class ShowTodos extends StatelessWidget {
         return const Divider(color: Colors.grey);
       },
       itemBuilder: (BuildContext context, int index) {
-        return TodoItem(todo: todos[index]);
+      // 삭제용 위젯
+        return Dismissible(
+          key: ValueKey(todos[index].id),
+          background: showBackground(0),
+          secondaryBackground: showBackground(1),
+          onDismissed: (_) {
+          // 해당 리스트 삭제, 리스트의 id 를 전달
+            context.read<TodoList>().removeTodo(todos[index].id);
+          },
+          confirmDismiss: (_) {
+          // 삭제시 확인용 팝업창 표시
+            return showDialog(
+              context: context,
+              barrierDismissible: false, // 다이얼로그 외부 클릭시 없어지지 않음
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text('Are you sure?'),
+                  content: const Text('Do you really want to delete?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('NO'),
+                    ),
+                    TextButton(
+                    // if true, onDismissed 실행
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('YES'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: TodoItem(todo: todos[index]),
+        );
       },
     );
   }
@@ -225,6 +231,7 @@ class ShowTodos extends StatelessWidget {
 
 class TodoItem extends StatefulWidget {
   final Todo todo;
+
   const TodoItem({Key? key, required this.todo}) : super(key: key);
 
   @override
@@ -232,20 +239,77 @@ class TodoItem extends StatefulWidget {
 }
 
 class _TodoItemState extends State<TodoItem> {
+// 새로운 desc 를 저장할 controller
+  late final TextEditingController textController;
+
+  @override
+  void initState() {
+    super.initState();
+    textController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    debugPrint('todo list : ${widget.todo}');
 
     return ListTile(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            bool _error = false;
+            textController.text = widget.todo.desc;
+            return StatefulBuilder(       // errorText 를 다시 그려야 해서 사용함.
+              builder: (BuildContext context, StateSetter setState) {
+                return AlertDialog(
+                  title: const Text('Edit Todo'),
+                  content: TextFormField(
+                    controller: textController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      errorText: _error ? 'Value cannot be empty' : null,
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('CANCEL'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _error = textController.text.isEmpty ? true : false;
+
+                          if (!_error) { // if empty, skip if.
+                            context.read<TodoList>().editTodo(
+                              widget.todo.id,
+                              textController.text,
+                            );
+                            Navigator.pop(context);
+                          }
+                        });
+                      },
+                      child: const Text('EDIT'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
       leading: Checkbox(
         value: widget.todo.completed,
         onChanged: (bool? checked) {
-          // 토글함수
           context.read<TodoList>().toggleTodo(widget.todo.id);
           debugPrint(
-              'value(${widget.todo.desc}): ${widget.todo.completed.toString()}');
-          // provider 처리해서 필요없음
-          // setState(() {});
+              'value(${widget.todo.desc}): ${widget.todo.completed
+                  .toString()}');
         },
       ),
       title: Text(widget.todo.desc),
