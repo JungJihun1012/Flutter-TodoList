@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_todolist/model/todo_model.dart';
 import 'package:flutter_todolist/provider/todo_list.dart';
+import 'package:flutter_todolist/provider/provider.dart';
 
 class TodoActiveCountState extends Equatable {
   final int todoActiveCount;
@@ -29,26 +31,14 @@ class TodoActiveCountState extends Equatable {
   }
 }
 
-class TodoActiveCount with ChangeNotifier {
-  // TodoActiveCountState _state = TodoActiveCountState.init();
-  late TodoActiveCountState _state;
-  final int initTodoActiveCount;
+class TodoActiveCount{
+  final TodoList todoList;
+  TodoActiveCount({required this.todoList});
 
-  TodoActiveCount({
-    required this.initTodoActiveCount,
-  }) {
-    debugPrint('initTodoActiveCount :' +  initTodoActiveCount.toString());
-    _state = TodoActiveCountState(todoActiveCount: initTodoActiveCount);
-  }
-
-  TodoActiveCountState get state => _state;
-
-
-  void update(TodoList todoList) {
-    final int newTodoActiveCount =
-        todoList.state.todos.where((todo) => !todo.completed).toList().length;
-    _state = _state.copyWith(todoActiveCount: newTodoActiveCount);
-    debugPrint('update - active count: ' + _state.toString());
-    notifyListeners();
-  }
+  TodoActiveCountState  get state => TodoActiveCountState(
+    todoActiveCount: todoList.state.todos
+            .where((Todo todo) => !todo.completed)
+            .toList()
+            .length,
+  );
 }
