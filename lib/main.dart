@@ -22,30 +22,27 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<TodoList>(create: (context) => TodoList()),
         ChangeNotifierProvider<TodoFilter>(create: (context) => TodoFilter()),
         ChangeNotifierProvider<TodoSearch>(create: (context) => TodoSearch()),
-        ChangeNotifierProxyProvider3<TodoFilter, TodoSearch, TodoList,
-            FilteredTodos>(
-          create: (context) => FilteredTodos(
-            initFilteredTodos: context.read<TodoList>().state.todos,
-          ),
+        ProxyProvider3<TodoFilter, TodoSearch, TodoList, FilteredTodos>(
           update: (
             BuildContext context,
             TodoFilter todoFilter,
             TodoSearch todoSearch,
             TodoList todoList,
-            FilteredTodos? filteredTodos,
+            FilteredTodos? _,
           ) =>
-              filteredTodos!..update(todoFilter, todoSearch, todoList),
+              FilteredTodos(
+                todoList: todoList,
+                todoFilter: todoFilter,
+                todoSearch: todoSearch,
+              ),
         ),
-        ChangeNotifierProxyProvider<TodoList, TodoActiveCount>(
-          create: (context) => TodoActiveCount(
-            initTodoActiveCount: context.read<TodoList>().state.todos.length,
-          ),
+        ProxyProvider<TodoList, TodoActiveCount>(
           update: (
             BuildContext context,
             TodoList todoList,
-            TodoActiveCount? todoActiveCount,
+            TodoActiveCount? _,
           ) =>
-              todoActiveCount!..update(todoList),
+              TodoActiveCount(todoList: todoList),
         )
       ],
       child: MaterialApp(
