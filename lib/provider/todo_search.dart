@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TodoSearchState extends Equatable {
   final String searchTerm;
@@ -26,12 +27,10 @@ class TodoSearchState extends Equatable {
   }
 }
 
-class TodoSearch with ChangeNotifier {
-  TodoSearchState _state = TodoSearchState.init();
-  TodoSearchState get state => _state;
+class TodoSearch extends StateNotifier<TodoSearchState> {
+    TodoSearch() : super(TodoSearchState.init());
 
   void setSearchTerm(String newSearchTerm) {
-    _state = _state.copyWith(searchTerm: newSearchTerm);
-    notifyListeners();
+    state = state.copyWith(searchTerm: newSearchTerm);
   }
 }

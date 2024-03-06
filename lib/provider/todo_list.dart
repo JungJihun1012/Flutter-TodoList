@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-
+import 'package:state_notifier/state_notifier.dart';
 import '../model/todo_model.dart';
 
 class TodoListState extends Equatable {
@@ -32,41 +32,25 @@ class TodoListState extends Equatable {
   }
 }
 
-class TodoList with ChangeNotifier {
-  TodoListState _state = TodoListState.init();
-  TodoListState get state => _state;
+class TodoList extends StateNotifier<TodoListState> {
+  TodoList() : super(TodoListState.init());
 
   void addTodo(String todoDesc) {
     int? newNum;
-    if(_state.todos.isEmpty) {
+    if (state.todos.isEmpty) {
       newNum = 1;
-    }else {
-      newNum = int.parse(_state.todos.last.id)+1;
+    } else {
+      newNum = int.parse(state.todos.last.id) + 1;
     }
-    final newTodo = Todo(id: newNum.toString(),desc: todoDesc);
-    final newTodos = [..._state.todos, newTodo];
+    final newTodo = Todo(id: newNum.toString(), desc: todoDesc);
+    final newTodos = [...state.todos, newTodo];
 
-    _state = _state.copyWith(todos: newTodos);
-    notifyListeners();
-  }
-
-  void toggleTodo(String id) {
-    final newTodos = _state.todos.map((Todo todo) {
-      if (todo.id == id) {
-        return Todo(
-          id: id,
-          desc: todo.desc,
-          completed: !todo.completed,
-        );
-      }
-      return todo;
-    }).toList();
-    _state = _state.copyWith(todos: newTodos);
-    notifyListeners();
+    state = state.copyWith(todos: newTodos);
+    debugPrint('addTodo: ' + state.toString());
   }
 
   void editTodo(String id, String desc) {
-    final newTodos = _state.todos.map((Todo todo){
+    final newTodos = state.todos.map((Todo todo) {
       if (todo.id == id) {
         return Todo(
           id: id,
@@ -77,14 +61,26 @@ class TodoList with ChangeNotifier {
       return todo;
     }).toList();
 
-    _state = _state.copyWith(todos: newTodos);
-    notifyListeners();
+    state = state.copyWith(todos: newTodos);
   }
 
   void removeTodo(String id) {
-    final newTodos = _state.todos.where((Todo todo) => todo.id != id).toList();
-    _state = _state.copyWith(todos: newTodos);
-    debugPrint('remove Todos: ' + _state.toString());
-    notifyListeners();
+    final newTodos = state.todos.where((Todo todo) => todo.id != id).toList();
+    state = state.copyWith(todos: newTodos);
+    debugPrint('remove Todos: ' + state.toString());
+  }
+
+  void toggleTodo(String id) {
+    final newTodos = state.todos.map((Todo todo) {
+      if (todo.id == id) {
+        return Todo(
+          id: id,
+          desc: todo.desc,
+          completed: !todo.completed,
+        );
+      }
+      return todo;
+    }).toList();
+    state = state.copyWith(todos: newTodos);
   }
 }

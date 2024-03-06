@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
+import 'package:state_notifier/state_notifier.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_todolist/model/todo_model.dart';
 import 'package:flutter_todolist/provider/todo_list.dart';
 import 'package:flutter_todolist/provider/provider.dart';
@@ -31,14 +32,16 @@ class TodoActiveCountState extends Equatable {
   }
 }
 
-class TodoActiveCount{
-  final TodoList todoList;
-  TodoActiveCount({required this.todoList});
+class TodoActiveCount extends StateNotifier<TodoActiveCountState>
+    with LocatorMixin {
+  TodoActiveCount() : super(TodoActiveCountState.init());
 
-  TodoActiveCountState  get state => TodoActiveCountState(
-    todoActiveCount: todoList.state.todos
-            .where((Todo todo) => !todo.completed)
-            .toList()
-            .length,
-  );
+  @override
+  void update(Locator watch) {
+    final List<Todo> todos = watch<TodoListState>().todos;
+    state = state.copyWith(
+        todoActiveCount:
+            todos.where((Todo todo) => !todo.completed).toList().length);
+    super.update(watch);
+  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_todolist/provider/provider.dart';
 import 'package:flutter_todolist/provider/todo_filter.dart';
 import 'package:flutter_todolist/provider/todo_list.dart';
 import 'package:provider/provider.dart';
+import 'package:state_notifier/state_notifier.dart';
 
 import '../model/todo_model.dart';
 
@@ -52,7 +53,7 @@ class TodoHeader extends StatelessWidget {
           style: TextStyle(fontSize: 40.0),
         ),
         Text(
-          '${context.watch<TodoActiveCount>().state.todoActiveCount} items left',
+          '${context.watch<TodoActiveCountState>().todoActiveCount} item left',
           style: const TextStyle(
             fontSize: 20.0,
             color: Colors.redAccent,
@@ -155,8 +156,8 @@ class SearchAndFilterTodo extends StatelessWidget {
   }
 
   Color textColor(BuildContext context, Filter filter) {
-    var currentFilter = context.watch<TodoFilter>().state.filter;
-    return currentFilter == filter ? Colors.blue : Colors.grey;
+    var currentFilter = context.watch<TodoFilterState>().filter;
+    return currentFilter == filter ? Colors.blueAccent : Colors.grey;
   }
 }
 
@@ -179,7 +180,7 @@ class ShowTodos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final todos = context.watch<FilteredTodos>().state.filteredTodos;
+    final todos = context.watch<FilteredTodosState>().filteredTodos;
 
     return ListView.separated(
       primary: false,

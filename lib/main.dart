@@ -1,10 +1,7 @@
 import "package:flutter/material.dart";
-import "package:flutter_todolist/provider/filtered_todos.dart";
 import "package:flutter_todolist/provider/provider.dart";
-import "package:flutter_todolist/provider/todo_filter.dart";
-import "package:flutter_todolist/provider/todo_list.dart";
 import "package:provider/provider.dart";
-
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import "screens/todos_screen.dart";
 
 void main() {
@@ -16,34 +13,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //MultiProvider 추가
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<TodoList>(create: (context) => TodoList()),
-        ChangeNotifierProvider<TodoFilter>(create: (context) => TodoFilter()),
-        ChangeNotifierProvider<TodoSearch>(create: (context) => TodoSearch()),
-        ProxyProvider3<TodoFilter, TodoSearch, TodoList, FilteredTodos>(
-          update: (
-            BuildContext context,
-            TodoFilter todoFilter,
-            TodoSearch todoSearch,
-            TodoList todoList,
-            FilteredTodos? _,
-          ) =>
-              FilteredTodos(
-                todoList: todoList,
-                todoFilter: todoFilter,
-                todoSearch: todoSearch,
-              ),
-        ),
-        ProxyProvider<TodoList, TodoActiveCount>(
-          update: (
-            BuildContext context,
-            TodoList todoList,
-            TodoActiveCount? _,
-          ) =>
-              TodoActiveCount(todoList: todoList),
-        )
+        StateNotifierProvider<TodoList, TodoListState>(
+            create: (context) => TodoList()),
+        StateNotifierProvider<TodoFilter, TodoFilterState>(
+            create: (context) => TodoFilter()),
+        StateNotifierProvider<TodoSearch, TodoSearchState>(
+            create: (context) => TodoSearch()),
+        StateNotifierProvider<TodoActiveCount, TodoActiveCountState>(
+            create: (context) => TodoActiveCount()),
+        StateNotifierProvider<FilteredTodos, FilteredTodosState>(
+            create: (context) => FilteredTodos()),
       ],
       child: MaterialApp(
         title: 'TODOS',
